@@ -25,13 +25,13 @@ related:
 
 ---
 
-**TL;DR:** The article will show how to implement a *reverse proxy* in C# within the *.NET Core* environment to overcome specific needs that you could hardly solve with an out-of-the-box software. You can find the code of the final project on this [GitHub repository]().
+**TL;DR:** The article will show how to implement a *reverse proxy* in C# within the *.NET Core* environment to overcome specific needs that you could hardly solve with an out-of-the-box software. You can find the code of the final project on this [GitHub repository](https://github.com/andychiare/netcore2-reverse-proxy).
 
 ---
 
 ## Using a Reverse Proxy
 
-Among the various elements of a network infrastructure, such as DNS servers, firewalls, proxies and similar, reverse proxies gained a lot of popularity not only among IT people, but also among developers. This is mainly due to the growth in popularity of microservice architectures and to advanced integration needs between technical partners.
+Among the various elements of a network infrastructure, such as DNS servers, firewalls, proxies and similar, reverse proxies gained a lot of popularity not only among IT people but also among developers. This is mainly due to the growth in popularity of microservice architectures and to advanced integration needs between technical partners.
 
 ### What is a Reverse Proxy
 
@@ -45,15 +45,15 @@ A reverse proxy can be used in different contexts:
 
 - *load balancing*
 
-  Maybe this is one of the most familiar use of a reverse proxy. It can distribute the requests load among a set of identical servers accordingly to some specific algorithm providing support for scalability and availability.
+  Maybe this is one of the most familiar uses of a reverse proxy. It can distribute the requests load among a set of identical servers accordingly to some specific algorithm providing support for scalability and availability of a system.
 
 - *URL rewriting*
 
-  Having meaningful URLs is crucial from a SEO standpoint. If you cannot change the URLs of your website, you can hide them behind a reverse proxy that exposes to users and web crawlers a more attractive version.
+  Having meaningful URLs is crucial from an SEO standpoint. If you cannot change the URLs of your website, you can hide them behind a reverse proxy that exposes to users and web crawlers a more attractive version.
 
 - *static content serving*
 
-  Many reverse proxy servers may be configured to act as web servers. This allows you to use them for providing static content, such as HTML pages, JavaScript scripts, images, and other files, while forwarding requests for dynamic content to dedicated servers. This is a sort of load balancing based on the content type.
+  Many reverse proxy servers may be configured to act as web servers. This allows you to use them for providing static content, such as HTML pages, JavaScript scripts, images, and other files while forwarding requests for dynamic content to dedicated servers. This is a sort of load balancing based on the content type.
 
 - *API gateway*
 
@@ -63,15 +63,11 @@ A reverse proxy can be used in different contexts:
 
   This is pretty similar to the API gateway context. In this case, you can have a single entry point for multiple websites, possibly with a centralized homepage.
 
-
-
-Why it can be relevant to a dev?
-
 ### Why Implementing a Custom Reverse Proxy
 
-One of the most popular reverse proxies is [nginx](http://nginx.org/). Of course, you can use other tools, like [Pound](http://www.apsis.ch/pound/) or [Squid](http://www.squid-cache.org/), or  you can also configure the [Apache Web server to act as a reverse proxy](http://httpd.apache.org/docs/current/howto/reverse_proxy.html). These tools offer a lot of configuration options that allow you to set up your system in most common scenarios. Some of them also provide the ability to extend their functionality with scripting languages, such as, for example, the [Lua](https://www.lua.org/) scripting language in nginx. This capability allows you to face some processing needs that the simple server configuration doesn't provide: HTTP header manipulation, conditional request forwarding, simple content transformation.
+One of the most popular reverse proxies is [nginx](http://nginx.org/). Of course, you can use other tools, like [Pound](http://www.apsis.ch/pound/) or [Squid](http://www.squid-cache.org/), or you can also configure the [Apache Web server to act as a reverse proxy](http://httpd.apache.org/docs/current/howto/reverse_proxy.html). These tools offer a lot of configuration options that allow you to set up your system in most common scenarios. Some of them also provide the ability to extend their functionality with scripting languages, such as, for example, the [Lua](https://www.lua.org/) scripting language in nginx. This capability allows you to face some processing needs that the simple server configuration doesn't provide: HTTP header manipulation, conditional request forwarding, simple content transformation.
 
-However, you may find scenarios where even an integrated scripting language is not enough for your needs due to the complexity of the scenario itself or because the scripts become hard to maintain. Consider, for example, a scenario where you need to expose a remote Web application within the current domain and need to prepare the HTTP requests by injecting data from a database and manipulate the responses to integrate them in the current environment. Or a scenario where you need to apply complex custom rule to analyze the HTTP traffic.
+However, you may find scenarios where even an integrated scripting language is not enough for your needs due to the complexity of the scenario itself or because the scripts become hard to maintain. Consider, for example, a scenario where you need to expose a remote Web application within the current domain and need to prepare the HTTP requests by injecting data from a database and manipulate the responses to integrate them in the current environment. Or a scenario where you need to apply complex custom rules to analyze the HTTP traffic.
 
 If you are in such a situation you may need to build your own custom reverse proxy.
 
@@ -79,7 +75,7 @@ If you are in such a situation you may need to build your own custom reverse pro
 
 Implementing the core of your own reverse proxy is not so hard as it may seem. Of course, you will be unlikely to create a reverse proxy with all the options that nginx or other similar tools can provide. However, you could focus on your specific goal in order to solve it at your best without resorting to complex configurations and scripts.
 
-In the remainder of the article, you will build a simple reverse proxy in C# that will allow you to integrate in your website a Google form. The form is [publicly available without authentication](https://docs.google.com/forms/d/e/1FAIpQLSdJwmxHIl_OCh-CI1J68G1EVSr9hKaYFLh3dHh8TLnxjxCJWw/viewform?hl=en) and allows to register to receive a T-shirt. When integrated in your Web application through the reverse proxy, it will be prefilled with some personal data of the current user. Of course, the implementation of the Web application will be kept simple to focus on the challenges related to the reverse proxy. Let's start coding!
+In the remainder of the article, you will build a simple reverse proxy in C# that will allow you to integrate in your website a Google form. The form is [publicly available without authentication](https://docs.google.com/forms/d/e/1FAIpQLSdJwmxHIl_OCh-CI1J68G1EVSr9hKaYFLh3dHh8TLnxjxCJWw/viewform?hl=en) and allows to register to receive a T-shirt. When integrated into your Web application through the reverse proxy, it will be prefilled with some personal data of the current user. Of course, the implementation of the Web application will be kept simple in order to focus on the challenges related to the reverse proxy. Let's start coding!
 
 ### Setting up the Project
 
@@ -103,7 +99,7 @@ You should get the following screen in a few seconds:
 
 ![](images/command-line-new-project.png)
 
-Regardless your choice, you will get the minimal project files for an empty ASP.NET application in the folder you have specified.
+Regardless of your choice, you will get the minimal project files for an empty ASP.NET application in the folder you have specified.
 
 ### Adding the Reverse Proxy Middleware
 
@@ -112,6 +108,7 @@ Recalling the definition of a reverse proxy, you need to intercept some HTTP req
 So, add a new file to the project named `ReverseProxyMiddleware.cs` with the following content:
 
 ```c#
+// ReverseProxyApplication/ReverseProxyMiddleware.cs
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Linq;
@@ -227,7 +224,7 @@ private static readonly HttpClient _httpClient = new HttpClient();
 private readonly RequestDelegate _nextMiddleware;
 ```
 
-The `_httpClient` property defines the HTTP client you will use to pass requests to the target server, while the `_nextMiddleware` property represents any subsequent middleware in the ASP.NET HTTP pipeline. You initialize the `_nextMiddleware` property in the class constructor:
+The `_httpClient` property defines the HTTP client you will use to pass requests to the target server, while the `_nextMiddleware` property represents any subsequent middleware in the ASP.NET HTTP pipeline. You initialize the `_nextMiddleware` property in the class constructor as follows:
 
 ```c#
 public ReverseProxyMiddleware(RequestDelegate nextMiddleware)
@@ -259,7 +256,7 @@ public async Task Invoke(HttpContext context)
 }
 ```
 
-It tries to build the target Uri, that is the address of the target server, starting from the current HTTP context. If a target Uri has been returned by the `BuildTargetUri()` method, it means that the original HTTP request should be forwarded to the target server, so the original request must be processed. Otherwise the request is not processed by the current middleware and it is passed to the next middleware in the pipeline.
+It tries to build the target Uri, that is the address of the target server, starting from the current HTTP context. If a target Uri has been returned by the `BuildTargetUri()` method, it means that the original HTTP request should be forwarded to the target server, so the original request must be processed. Otherwise, the request is not processed by the current middleware and it is passed to the next middleware in the pipeline.
 
 When the request needs to be processed, it builds a message for the target server through the `CreateTargetMessage()` method and sends it by using the `_httpClient` private property. Then, the response received from the target server is entirely copied into the response to be provided to the client.
 
@@ -286,6 +283,7 @@ As you can see, it looks for requests whose path starts with the `/googleforms` 
 Now you are ready to use the reverse proxy middleware in the ASP.NET application. Open the `Startup.cs` file and modify the `Configure()` method as shown in the following example:
 
 ```C#
+// ReverseProxyApplication/Startup.cs
 public void Configure(IApplicationBuilder app, IHostingEnvironment env)
 {
   if (env.IsDevelopment())
@@ -320,7 +318,7 @@ This page shows just the link you set in the `Configure()` method. By clicking t
 
 Awesome! It is working. Notice that the URL in the address bar remains inside your application domain.
 
-However, if you try to select a T-shirt size or adding a comment, you feel that something is wrong. Actually, if you open the developer tools of your browser, you get a lot of error messages:
+However, if you try to select the size of the T-shirt or to add a comment, you feel that something is wrong. Actually, if you open the developer tools of your browser, you get a lot of error messages:
 
 ![](images/cors-error-messages.png)
 
@@ -330,11 +328,12 @@ Your reverse proxy passed the resources coming from the `https://docs.google.com
 
 ### Processing the Response of the Target Server
 
-To avoid the error due to the the same origin policy violation, you should make the scripts performing the Ajax requests to be loaded through the reverse proxy. In addition, you should also ensure that even the Ajax requests will be submitted to the target server through the reverse proxy. This ensures that Ajax calls comply with the browsers' same origin policy, while the reverse proxy directs the HTTP requests to the correct servers.
+To avoid the error due to the *the same origin policy* violation, you should make the scripts performing the Ajax requests to be loaded through the reverse proxy. In addition, you should also ensure that even the Ajax requests will be submitted to the target server through the reverse proxy. This ensures Ajax calls to comply with the browsers' same origin policy, while the reverse proxy directs the HTTP requests to the correct servers.
 
 Checking the network requests, you find that the scripts are loaded from the domains `https://www.google.com` and `https://www.gstatic.com`. So, we need to capture the references to these domains inside the HTML and JavaScript content coming from the target server and replace it with a prefix in our domain, say `/google` and `/googlestatic`. In order to get this result, you need to change the `Invoke()` method of the `ReverseProxyMiddleware` class. In particular, you need to replace  its body with the following:
 
 ```c#
+// ReverseProxyApplication/ReverseProxyMiddleware.cs
 public async Task Invoke(HttpContext context)
 {
   var targetUri = BuildTargetUri(context.Request);
@@ -347,7 +346,6 @@ public async Task Invoke(HttpContext context)
     {
       context.Response.StatusCode = (int)responseMessage.StatusCode;
       CopyFromTargetResponseHeaders(context, responseMessage);
-      await responseMessage.Content.CopyToAsync(context.Response.Body);
       await ProcessResponseContent(context, responseMessage);
     }
     return;
@@ -361,6 +359,7 @@ The only difference from the previous version is the call to the `ProcessRespons
 This new private method is responsible for processing the response coming from the target server. Its implementation is as follows:
 
 ```c#
+// ReverseProxyApplication/ReverseProxyMiddleware.cs
 private async Task ProcessResponseContent(HttpContext context, HttpResponseMessage responseMessage)
 {
   var content = await responseMessage.Content.ReadAsByteArrayAsync();
@@ -381,9 +380,10 @@ private async Task ProcessResponseContent(HttpContext context, HttpResponseMessa
 
 As you can see, it extracts the content of the response from the target server and checks its content type. If the response body contains HTML markup or JavaScript code, then any occurrence of the domains detected above are replaced by the respective prefixes and the response is changed accordingly. Otherwise, the original content is forwarded to the client.
 
-In the same class, you need to change also the `BuildTargetUri()` private method, so that these new path prefixes are processes accordingly. This is the new version of the method:
+In the same class, you need to change also the `BuildTargetUri()` private method, so that these new path prefixes are processed accordingly. This is the new version of the method:
 
 ```c#
+// ReverseProxyApplication/ReverseProxyMiddleware.cs
 private Uri BuildTargetUri(HttpRequest request)
 {
   Uri targetUri = null;
@@ -421,6 +421,7 @@ Having this information, you should simply append to the query string of origina
 So, change the `CreateTargetMessage()` private method of the `ReverseProxyMiddleware` class as follows:
 
 ```c#
+// ReverseProxyApplication/ReverseProxyMiddleware.cs
 private HttpRequestMessage CreateTargetMessage(HttpContext context, Uri targetUri)
 {
   var requestMessage = new HttpRequestMessage();
@@ -448,7 +449,7 @@ Now, you can run again the Web application and when you go to the second page of
 
 ## Summary
 
-After exploring what a reverse proxy is, when using it and why you could need to implement a custom one, you started setting up an ASP.NET Core application to learn how to implement it. You created a middleware acting as a reverse proxy: it captured specific requests and submitted them to the target servers. In the application example you have implemented, the target servers were a few Google's servers. During the implementation, you explored how to process the target server's responses in order to avoid violations of the same origin policy of the browser and how to process the original requests in order to get a prefilled form.
+After exploring what a reverse proxy is, when using it and why you could need to implement a custom one, you started setting up an ASP.NET Core application to learn how to implement it. You created a middleware acting as a reverse proxy: it captured specific requests and submitted them to the target servers. In the application example, you have implemented, the target servers were a few Google's servers. During the implementation, you explored how to process the target server's responses in order to avoid violations of *the same origin policy* of the browser and how to process the original requests in order to get a prefilled form.
 
-You can find the final code of the project developed throughout this article on [this GitHub repository](XXXXX).
+You can find the final code of the project developed throughout this article on [this GitHub repository](https://github.com/andychiare/netcore2-reverse-proxy).
 
