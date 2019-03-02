@@ -520,64 +520,106 @@ AUTH0_CLIENT_SECRET=<YOUR_CLIENT_SECRET>
 
 Replace <YOUR_DOMAIN>, <YOUR_AUDIENCE> and <YOUR_CLIENT_SECRET> placeholders with the appropriate values taken from the Auth0 dashboard.
 
-Then install the [Auth0 PHP SDK](https://github.com/auth0/auth0-PHP) by running the following command:
+Now, create a middleware in order to check if HTTP requests to the GraphQL API are authorized. You can create a middleware by running the following command:
+
+```shell
+php artisan make:middleware CheckAccess
+```
+
+A new file named `CheckAccess.php` will be created in the folder `app/Http/Middleware`. In order to check if an HTTP request is authorized, you need to verify if it has an authorization token header and if this token is valid. You can use the [Auth0 PHP SDK](https://github.com/auth0/auth0-PHP) to make this check. Install it by running the following command:
 
 ```shell
 composer require auth0/auth0-php
 ```
 
-Now, edit the `app/GraphQL/WinesQuery.php` file and add the `authorize()` method as shown below:
+Edit the `app/Http/Middleware/CheckAccess.php` file by putting the following content:
 
 ```php
+// app/Http/Middleware/CheckAccess.php
 <?php
-namespace App\GraphQL\Queries;
 
-use GraphQL;
-use Rebing\GraphQL\Support\Query;
-use Rebing\GraphQL\Support\SelectFields;
-use GraphQL\Type\Definition\Type;
-use App\Wine;
+namespace App\Http\Middleware;
+
+use Closure;
 use Auth0\SDK\JWTVerifier;
 
-class WinesQuery extends Query {
-
-    protected $attributes = [
-        'name'  => 'wines',
-    ];
-
-	public function authorize(array $args)
+class CheckAccess
+{
+    public function handle($request, Closure $next)
     {
-    	$isAuthorized = true;
-    
     	if (!empty(env( 'AUTH0_AUDIENCE' )) && !empty(env( 'AUTH0_DOMAIN' ))) {
 			$verifier = new JWTVerifier([
     			'valid_audiences' => [env( 'AUTH0_AUDIENCE' )],
     			'authorized_iss' => [env( 'AUTH0_DOMAIN' )],
-            	'client_secret' => [env( 'AUTH0_CLIENT_SECRET' )]
+            	'client_secret' => env( 'AUTH0_CLIENT_SECRET' ),
+            	'supported_algs' => ['RS256']
 			]);
-        	$request = request();
-        	$token = $request->bearerToken();
-            
-			$decoded = $verifier->verifyAndDecode($token);
-        	$isAuthorized = (boolean) $decoded;
+
+        	$token = $request-> bearerToken();
+
+			$decodedToken = $verifier->verifyAndDecode($token);
+
+        	if (!$decodedToken) {
+            	abort(403, 'Access denied');
+            }
         }
-    
-    	return $isAuthorized;
-    }
-
-    public function type()
-    {
-        return Type::listOf(GraphQL::type('Wine'));
-    }
-
-    public function resolve($root, $args)
-    {
-      return Wine::all();
+        return $next($request);
     }
 }
+
 ```
 
-As you can see, the `authorize()` method uses the `JWTVerifier` class to verify and decode the authorization token. The `JWTVerifier` instance is built by using the parameter you set into the `.env` file. The authorization check only happens if both audience and domain values have been defined in the `.env` file. You should make the same changes also to the `app/GraphQL/WineQuery.php` file.
+The `handle()` method of the `CheckAccess` middleware actually checks the authorization token only if you have configured your application by providing an Auth0 audience and domain. In this case, it create an instance of the `JWTVerifier` class based on the Auth0 configuration data you set in the `.env` file. Then it retrieves the current bearer token from the HTTP request and verifies it. If the token is correctly decoded, the request is forwarded. Otherwise an *Access denied* message is sent back.
+
+Once you have defined the middleware, you need to register it. So, open the `app/Http/Kernel.php` file and add to the list of the `$routeMiddleware` property a mapping between a key and the newly created middleware class, as shown below:
+
+```php
+// app/Http/Kernel.php
+<?php
+
+namespace App\Http;
+
+use Illuminate\Foundation\Http\Kernel as HttpKernel;
+
+class Kernel extends HttpKernel
+{
+//...
+
+    protected $routeMiddleware = [
+        'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
+        'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
+        'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        'can' => \Illuminate\Auth\Middleware\Authorize::class,
+        'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+        'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+    	'graphql' => \App\Http\Middleware\CheckAccess::class,
+    ];
+}    
+```
+
+As you can see, the last item of the `$routeMiddleware` list maps the `graphql` key to the `CheckAccess` class you defined above.
+
+As a final step, associate the `CheckAccess` middleware to the GraphQL schema by changing the `app/config/graphql.php` file as follows:
+
+```php
+// app/config/graphql.php
+
+//...
+
+	'schemas' => [
+    	'default' => [
+       		'query' => [
+           		'wine' => App\GraphQL\Queries\WineQuery::class,
+            	'wines' => App\GraphQL\Queries\WinesQuery::class,
+        	],
+        	'middleware' => ['graphql']
+    	],
+	],
+
+//...
+```
+
+The `middleware` declaration asserts that the middleware identified by the `graphql` key will be executed for each request to the GraphQL schema.
 
 These changes protect the GraphQL API from unauthorized accesses. You can try to access the API by using the GraphiQL client in order to verify.
 
