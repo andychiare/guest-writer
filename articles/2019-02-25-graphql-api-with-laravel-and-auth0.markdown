@@ -571,6 +571,16 @@ class CheckAccess
 
 The `handle()` method of the `CheckAccess` middleware actually checks the authorization token only if you have configured your application by providing an Auth0 audience and domain. In this case, it create an instance of the `JWTVerifier` class based on the Auth0 configuration data you set in the `.env` file. Then it retrieves the current bearer token from the HTTP request and verifies it. If the token is correctly decoded, the request is forwarded. Otherwise an *Access denied* message is sent back.
 
+> **Warning**: If you are using Apache as web server, be aware that [it could](https://stackoverflow.com/questions/26475885/authorization-header-missing-in-php-post-request) [remove](http://docs.php.net/manual/en/features.http-auth.php#114877) the `Authorization` header from incoming HTTP requests. To overcome this issue, you need to add the following lines in the `.htaccess` file you find in `/public` folder:
+>
+> ```
+> RewriteEngine On
+> RewriteCond %{HTTP:Authorization} ^(.*)
+> RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
+> ```
+>
+> 
+
 Once you have defined the middleware, you need to register it. So, open the `app/Http/Kernel.php` file and add to the list of the `$routeMiddleware` property a mapping between a key and the newly created middleware class, as shown below:
 
 ```php
